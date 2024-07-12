@@ -9,6 +9,7 @@ import {
   PointInTriangle,
   addVectors,
   arePointsEqual,
+  distanceSq2d,
   pointToVector,
   rotatePoint,
   scalePointFromOrigin,
@@ -20,6 +21,7 @@ import {
 import type Scene from "../scene/Scene";
 import type { Point } from "../types";
 import { toBrandedType } from "../utils";
+import { debugDrawBounds } from "../visualdebug";
 import {
   bindPointToSnapToElementOutline,
   distanceToBindableElement,
@@ -207,9 +209,18 @@ export const mutateElbowArrow = (
       maxBindingGap(endElement, endElement.width, endElement.height)) ??
       0,
   );
+  const [startZeroBounds, endZeroBounds] = [
+    startElement && aabbForElement(startElement),
+    endElement && aabbForElement(endElement),
+  ];
+  const distance =
+    (startZeroBounds &&
+      endZeroBounds &&
+      boundsDistance(startZeroBounds, endZeroBounds)) ??
+    0;
   const [startBounds, endBounds] = [
     startElement
-      ? aabbForElement(startElement, offsetFromHeading(startHeading, bias))
+      ? aabbForElement(startElement, offsetFromHeading(startHeading, bias, 1))
       : ([
           // Start point
           startGlobalPoint[0] - 2,
@@ -218,7 +229,7 @@ export const mutateElbowArrow = (
           startGlobalPoint[1] + 2,
         ] as Bounds),
     endElement
-      ? aabbForElement(endElement, offsetFromHeading(endHeading, bias))
+      ? aabbForElement(endElement, offsetFromHeading(endHeading, bias, 1))
       : ([
           // End point
           endGlobalPoint[0] - 2,
@@ -227,6 +238,8 @@ export const mutateElbowArrow = (
           endGlobalPoint[1] + 2,
         ] as Bounds),
   ];
+  debugDrawBounds(startBounds);
+  debugDrawBounds(endBounds);
   const common = commonAABB([startBounds, endBounds]);
   const dynamicAABBs = generateDynamicAABBs(
     startBounds,
@@ -311,8 +324,8 @@ export const mutateElbowArrow = (
 const offsetFromHeading = (
   heading: Heading,
   head: number,
+  side: number = 1,
 ): [number, number, number, number] => {
-  const side = 1;
   switch (heading) {
     case HEADING_UP:
       return [head, side, side, side];
@@ -1096,3 +1109,49 @@ export const getArrowLocalFixedPoints = (
     LinearElementEditor.pointFromAbsoluteCoords(arrow, endPoint, elementsMap),
   ];
 };
+
+const boundsDistance = (a: Bounds, b: Bounds) => {
+  const a1 = [a[0], a[1]] as Point;
+  const a2 = [a[2], a[1]] as Point;
+  const a3 = [a[2], a[3]] as Point;
+  const a4 = [a[0], a[3]] as Point;
+  const b1 = [b[0], b[1]] as Point;
+  const b2 = [b[2], b[1]] as Point;
+  const b3 = [b[2], b[3]] as Point;
+  const b4 = [b[0], b[3]] as Point;
+
+  return Math.sqrt(
+    Math.min(
+      distanceSq2d(a1, b1),
+      distanceSq2d(a1, b2),
+      distanceSq2d(a1, b3),
+      distanceSq2d(a1, b4),
+      distanceSq2d(a2, b1),
+      distanceSq2d(a2, b2),
+      distanceSq2d(a2, b3),
+      distanceSq2d(a2, b4),
+      distanceSq2d(a3, b1),
+      distanceSq2d(a3, b2),
+      distanceSq2d(a3, b3),
+      distanceSq2d(a3, b4),
+      distanceSq2d(a4, b1),
+      distanceSq2d(a4, b2),
+      distanceSq2d(a4, b3),
+      distanceSq2d(a4, b4),
+    ),
+  );
+};
+
+// export const elementsAreAdjacent = (a: Bounds, b: Bounds) => {
+//   if (a[2] < b[0] && b[1] < a[3]) {
+//     return true;
+//   } else if (a[2] < b[0] && b[3] < a[1]) {
+//     return true;
+//   } else if (a[1] > b[2] && b[3] < a[1]) {
+//     return true;
+//   } else if (a[1] > b[2] && b[1] > a[3]) {
+//     return true;
+//   }
+
+//   return false;
+// };
