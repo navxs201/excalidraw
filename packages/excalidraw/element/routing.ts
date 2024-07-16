@@ -47,6 +47,7 @@ type Node = {
   f: number;
   g: number;
   h: number;
+  d: number;
   closed: boolean;
   visited: boolean;
   parent: Node | null;
@@ -339,7 +340,7 @@ const astar = (
   endHeading: Heading,
   aabbs: Bounds[],
 ) => {
-  const bendMultiplier = m_dist(start.pos, end.pos);
+  //const bendMultiplier = m_dist(start.pos, end.pos);
   const open = new BinaryHeap<Node>((node) => node.f);
 
   open.push(start);
@@ -404,13 +405,11 @@ const astar = (
       }
 
       const directionChange = previousDirection !== neighborHeading;
+      const directionPenalty = directionChange ? 1 : 0;
 
       // The g score is the shortest distance from start to current node.
       // We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
-      const gScore =
-        current.g +
-        m_dist(neighbor.addr, current.addr) +
-        (directionChange ? 10 : 0);
+      const gScore = current.g + m_dist(current.pos, neighbor.pos);
 
       const beenVisited = neighbor.visited;
 
@@ -424,9 +423,10 @@ const astar = (
         // Found an optimal (so far) path to this node.  Take score for node to see how good it is.
         neighbor.visited = true;
         neighbor.parent = current;
-        neighbor.h = m_dist(end.addr, neighbor.addr);
+        //neighbor.h = d_dist(neighbor.pos, end.pos);
         neighbor.g = gScore;
-        neighbor.f = neighbor.g + neighbor.h;
+        neighbor.d += directionChange ? 1 : 0;
+        neighbor.f = neighbor.g + d_dist(neighbor.pos, end.pos);
         if (!beenVisited) {
           // Pushing to heap will put it in proper place based on the 'f' value.
           open.push(neighbor);
@@ -455,6 +455,9 @@ const pathTo = (start: Node, node: Node) => {
 
 const m_dist = (a: Point, b: Point) =>
   Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+
+const d_dist = (a: Point, b: Point) =>
+  Math.min(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
 
 /**
  * Create a dynamically resizing bounding box for the given heading
@@ -563,6 +566,7 @@ const calculateGrid = (
           f: 0,
           g: 0,
           h: 0,
+          d: 1,
           closed: false,
           visited: false,
           parent: null,
