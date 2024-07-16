@@ -20,6 +20,7 @@ import {
 import type Scene from "../scene/Scene";
 import type { Point } from "../types";
 import { toBrandedType } from "../utils";
+import { debugDrawPoint } from "../visualdebug";
 import {
   bindPointToSnapToElementOutline,
   distanceToBindableElement,
@@ -306,6 +307,8 @@ export const mutateElbowArrow = (
   } else {
     console.error("Elbow arrow cannot find a route");
   }
+
+  grid.data.forEach((node) => node && debugDrawPoint(node.pos));
 };
 
 const offsetFromHeading = (
@@ -369,7 +372,7 @@ const astar = (
         continue;
       }
 
-      // Intersect
+      // Intersect test
       const neighborHalfPoint = scalePointFromOrigin(
         neighbor.pos,
         current.pos,
@@ -383,8 +386,6 @@ const astar = (
         continue;
       }
 
-      // The g score is the shortest distance from start to current node.
-      // We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
       const neighborHeading = neighborIndexToHeading(i as 0 | 1 | 2 | 3);
       const previousDirection = current.parent
         ? vectorToHeading(pointToVector(current.pos, current.parent.pos))
@@ -403,26 +404,27 @@ const astar = (
       }
 
       const directionChange = previousDirection !== neighborHeading;
+
+      // The g score is the shortest distance from start to current node.
+      // We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
       const gScore =
         current.g +
-        m_dist(neighbor.pos, current.pos) +
-        (directionChange ? Math.pow(bendMultiplier, 3) : 0);
+        m_dist(neighbor.addr, current.addr) +
+        (directionChange ? 10 : 0);
 
       const beenVisited = neighbor.visited;
 
       if (!beenVisited || gScore < neighbor.g) {
-        const estBendCount = estimateSegmentCount(
-          neighbor,
-          end,
-          neighborHeading,
-          endHeading,
-        );
+        // const estBendCount = estimateSegmentCount(
+        //   neighbor,
+        //   end,
+        //   neighborHeading,
+        //   endHeading,
+        // );
         // Found an optimal (so far) path to this node.  Take score for node to see how good it is.
         neighbor.visited = true;
         neighbor.parent = current;
-        neighbor.h =
-          m_dist(end.pos, neighbor.pos) +
-          estBendCount * Math.pow(bendMultiplier, 2);
+        neighbor.h = m_dist(end.addr, neighbor.addr);
         neighbor.g = gScore;
         neighbor.f = neighbor.g + neighbor.h;
         if (!beenVisited) {
