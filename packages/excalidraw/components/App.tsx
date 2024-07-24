@@ -4029,18 +4029,17 @@ class App extends React.Component<AppProps, AppState> {
           if (event[KEYS.CTRL_OR_CMD]) {
             if (isLinearElement(selectedElement)) {
               if (
-                !this.state.editingLinearElement ||
-                this.state.editingLinearElement.elementId !==
-                  selectedElements[0].id
+                !isElbowArrow(selectedElement) &&
+                (!this.state.editingLinearElement ||
+                  this.state.editingLinearElement.elementId !==
+                    selectedElements[0].id)
               ) {
                 this.store.shouldCaptureIncrement();
-                if (!isElbowArrow(selectedElement)) {
-                  this.setState({
-                    editingLinearElement: new LinearElementEditor(
-                      selectedElement,
-                    ),
-                  });
-                }
+                this.setState({
+                  editingLinearElement: new LinearElementEditor(
+                    selectedElement,
+                  ),
+                });
               }
             }
           } else if (
@@ -4902,6 +4901,7 @@ class App extends React.Component<AppProps, AppState> {
 
     if (selectedElements.length === 1 && isLinearElement(selectedElements[0])) {
       if (
+        !isElbowArrow(selectedElements[0]) &&
         event[KEYS.CTRL_OR_CMD] &&
         (!this.state.editingLinearElement ||
           this.state.editingLinearElement.elementId !== selectedElements[0].id)
@@ -7034,7 +7034,9 @@ class App extends React.Component<AppProps, AppState> {
       const [gridX, gridY] = getGridPoint(
         pointerDownState.origin.x,
         pointerDownState.origin.y,
-        event[KEYS.CTRL_OR_CMD] ? null : this.state.gridSize,
+        this.state.currentItemElbowArrow || event[KEYS.CTRL_OR_CMD]
+          ? null
+          : this.state.gridSize,
       );
 
       const topLayerFrame = this.getTopLayerFrameAtSceneCoords({
@@ -7349,7 +7351,9 @@ class App extends React.Component<AppProps, AppState> {
       const [gridX, gridY] = getGridPoint(
         pointerCoords.x,
         pointerCoords.y,
-        event[KEYS.CTRL_OR_CMD] ? null : this.state.gridSize,
+        this.state.currentItemElbowArrow || event[KEYS.CTRL_OR_CMD]
+          ? null
+          : this.state.gridSize,
       );
 
       // for arrows/lines, don't start dragging until a given threshold
@@ -9555,7 +9559,9 @@ class App extends React.Component<AppProps, AppState> {
       let [gridX, gridY] = getGridPoint(
         pointerCoords.x,
         pointerCoords.y,
-        event[KEYS.CTRL_OR_CMD] ? null : this.state.gridSize,
+        this.state.currentItemElbowArrow || event[KEYS.CTRL_OR_CMD]
+          ? null
+          : this.state.gridSize,
       );
 
       const image =

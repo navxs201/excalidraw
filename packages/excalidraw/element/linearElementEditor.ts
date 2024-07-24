@@ -277,7 +277,9 @@ export class LinearElementEditor {
           elementsMap,
           referencePoint,
           [scenePointerX, scenePointerY],
-          event[KEYS.CTRL_OR_CMD] ? null : appState.gridSize,
+          isElbowArrow(element) || event[KEYS.CTRL_OR_CMD]
+            ? null
+            : appState.gridSize,
         );
 
         LinearElementEditor.movePoints(
